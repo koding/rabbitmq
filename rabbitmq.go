@@ -138,12 +138,6 @@ func (r *RabbitMQ) Conn() *amqp.Connection {
 	return r.conn
 }
 
-// Controls how many messages the server will try to keep on
-// the network for consumers before receiving delivery acks.  The intent of Qos is
-// to make sure the network buffers stay full between the server and client.
-func (r *RabbitMQ) QOS(messageCount int) error {
-	return r.channel.Qos(messageCount, 0, false)
-}
 
 // newRabbitMQConnection opens a connection and a channel to RabbitMq
 // In order to prevent developers from misconfiguration
