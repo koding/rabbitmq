@@ -280,6 +280,9 @@ func shutdown(conn *amqp.Connection) error {
 
 	return nil
 }
+
+// shutdownChannel is a general closer function for channels
+func shutdownChannel(channel *amqp.Channel, tag string) error {
 	// This waits for a server acknowledgment which means the sockets will have
 	// flushed all outbound publishings prior to returning.  It's important to
 	// block on Close to not lose any publishings.
@@ -289,10 +292,8 @@ func shutdown(conn *amqp.Connection) error {
 		}
 	}
 
-	if err := conn.Close(); err != nil {
-		if amqpError, isAmqpError := err.(*amqp.Error); isAmqpError && amqpError.Code != 504 {
-			return fmt.Errorf("AMQP connection close error: %s", err)
-		}
+	if err := channel.Close(); err != nil {
+		return err
 	}
 
 	return nil
