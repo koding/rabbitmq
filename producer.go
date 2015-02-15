@@ -110,7 +110,10 @@ func (p *Producer) NotifyReturn(notifier func(message amqp.Return)) {
 
 // Shutdown gracefully closes all connections
 func (p *Producer) Shutdown() error {
-	err := shutdown(p.conn, p.channel, p.tag)
+	co := p.session.ConsumerOptions
+	if err := shutdownChannel(p.channel, co.Tag); err != nil {
+		return err
+	}
 
 	// Since publishing is asynchronous this can happen
 	// instantly without waiting for a done message.
