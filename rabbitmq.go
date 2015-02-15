@@ -271,7 +271,15 @@ type Closer interface {
 // shutdown is a general closer function for handling close gracefully
 // Mostly here for both consumers and producers
 // After a reconnection scenerio we are gonna call shutdown before connection
-func shutdown(conn *amqp.Connection, channel *amqp.Channel, tag string) error {
+func shutdown(conn *amqp.Connection) error {
+	if err := conn.Close(); err != nil {
+		if amqpError, isAmqpError := err.(*amqp.Error); isAmqpError && amqpError.Code != 504 {
+			return fmt.Errorf("AMQP connection close error: %s", err)
+		}
+	}
+
+	return nil
+}
 	// This waits for a server acknowledgment which means the sockets will have
 	// flushed all outbound publishings prior to returning.  It's important to
 	// block on Close to not lose any publishings.
