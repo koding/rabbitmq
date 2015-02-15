@@ -62,7 +62,6 @@ func (r *RabbitMQ) NewConsumer(e Exchange, q Queue, bo BindingOptions, co Consum
 }
 
 // connect internally declares the exchanges and queues
-// and starts to stream from given queue
 func (c *Consumer) connect() error {
 	e := c.session.Exchange
 	q := c.session.Queue
@@ -174,16 +173,15 @@ func (c *Consumer) Get(handler func(delivery amqp.Delivery)) error {
 		c.RabbitMQ.log.Debug("No message received")
 	}
 
-	return shutdown(c.conn, c.channel, c.tag)
+	// TODO maybe we should return ok too?
+	return nil
 }
 
 // Shutdown gracefully closes all connections and waits
 // for handler to finish its messages
 func (c *Consumer) Shutdown() error {
-	// to-do
-	// first stop streaming then close connections
-	err := shutdown(c.conn, c.channel, c.tag)
-	if err != nil {
+	co := c.session.ConsumerOptions
+	if err := shutdownChannel(c.channel, co.Tag); err != nil {
 		return err
 	}
 
