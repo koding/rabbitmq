@@ -6,6 +6,9 @@ type Consumer struct {
 	// Base struct for Producer
 	*RabbitMQ
 
+	// The communication channel over connection
+	channel *amqp.Channel
+
 	// All deliveries from server will send to this channel
 	deliveries <-chan amqp.Delivery
 
@@ -27,13 +30,20 @@ func (c *Consumer) Deliveries() <-chan amqp.Delivery {
 // NewConsumer is a constructor for consumer creation
 // Accepts Exchange, Queue, BindingOptions and ConsumerOptions
 func (r *RabbitMQ) NewConsumer(e Exchange, q Queue, bo BindingOptions, co ConsumerOptions) (*Consumer, error) {
-	rmq, err := r.Connect(co.Tag)
+	rmq, err := r.Connect()
+	if err != nil {
+		return nil, err
+	}
+
+	// getting a channel
+	channel, err := r.conn.Channel()
 	if err != nil {
 		return nil, err
 	}
 
 	c := &Consumer{
 		RabbitMQ: rmq,
+		channel:  channel,
 		done:     make(chan error),
 		session: Session{
 			Exchange:        e,
@@ -139,7 +149,7 @@ func (c *Consumer) Consume(handler func(delivery amqp.Delivery)) error {
 }
 
 // ConsumeMessage accepts a handler function and only consumes one message
-// stream from RabbitMq and then closes connection
+// stream from RabbitMq
 func (c *Consumer) Get(handler func(delivery amqp.Delivery)) error {
 	co := c.session.ConsumerOptions
 	q := c.session.Queue
