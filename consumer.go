@@ -184,9 +184,3 @@ func (c *Consumer) Shutdown() error {
 	// process.
 	return <-c.done
 }
-
-// RegisterSignalHandler watchs for interrupt signals
-// and gracefully closes consumer
-func (c *Consumer) RegisterSignalHandler() {
-	registerSignalHandler(c)
-}

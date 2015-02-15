@@ -115,11 +115,5 @@ func (p *Producer) Shutdown() error {
 	// Since publishing is asynchronous this can happen
 	// instantly without waiting for a done message.
 	defer p.RabbitMQ.log.Info("Producer shutdown OK")
-	return err
-}
-
-// RegisterSignalHandler watchs for interrupt signals
-// and gracefully closes consumer
-func (p *Producer) RegisterSignalHandler() {
-	registerSignalHandler(p)
+	return nil
 }

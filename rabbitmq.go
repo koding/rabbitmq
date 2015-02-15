@@ -260,6 +260,12 @@ func (c *Consumer) reconnect() {
 	c.Consume(c.handler)
 }
 
+// RegisterSignalHandler watchs for interrupt signals
+// and gracefully closes connection
+func (r *RabbitMQ) RegisterSignalHandler() {
+	registerSignalHandler(r)
+}
+
 // Closer interface is for handling reconnection logic in a sane way
 // Every reconnection supported struct should implement those methods
 // in order to work properly
