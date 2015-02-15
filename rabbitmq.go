@@ -256,6 +256,11 @@ func (c *Consumer) reconnect() {
 	c.Consume(c.handler)
 }
 
+// Shutdown closes the RabbitMQ connection
+func (r *RabbitMQ) Shutdown() error {
+	return shutdown(r.conn)
+}
+
 // RegisterSignalHandler watchs for interrupt signals
 // and gracefully closes connection
 func (r *RabbitMQ) RegisterSignalHandler() {
