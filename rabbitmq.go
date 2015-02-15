@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+
 	"github.com/koding/logging"
 
 	"github.com/streadway/amqp"
@@ -30,12 +31,6 @@ func New(c *Config, log logging.Logger) *RabbitMQ {
 type RabbitMQ struct {
 	// The connection between client and the server
 	conn *amqp.Connection
-
-	// The communication channel over connection
-	channel *amqp.Channel
-
-	// Client's tag for current connection
-	tag string
 
 	// config stores the current koding configuration based on the given profile
 	config *Config
@@ -138,17 +133,13 @@ func (r *RabbitMQ) Conn() *amqp.Connection {
 	return r.conn
 }
 
-
-// newRabbitMQConnection opens a connection and a channel to RabbitMq
-// In order to prevent developers from misconfiguration
-// and using same channel for publishing and consuming it opens a new channel for
-// every connection
-// TODO this should not return RabbitMQ struct - cihangir,arslan config changes
-func (r *RabbitMQ) Connect(tag string) (*RabbitMQ, error) {
-	if tag == "" {
-		return nil, errors.New("Tag is not defined in consumer options")
+// Dial dials the RMQ server
+func (r *RabbitMQ) Dial() error {
+	// if config is nil do not continue
+	if r.config == nil {
+		return errors.New("config is nil")
 	}
-	r.tag = tag
+
 	conf := amqp.URI{
 		Scheme:   "amqp",
 		Host:     r.config.Host,
@@ -159,17 +150,28 @@ func (r *RabbitMQ) Connect(tag string) (*RabbitMQ, error) {
 	}.String()
 
 	var err error
-	// get connection
 	// Connects opens an AMQP connection from the credentials in the URL.
 	r.conn, err = amqp.Dial(conf)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	r.handleErrors(r.conn)
-	// getting channel
-	r.channel, err = r.conn.Channel()
-	if err != nil {
+
+	return nil
+}
+
+// Connect opens a connection to RabbitMq. This function is idempotent
+//
+// TODO this should not return RabbitMQ struct - cihangir,arslan config changes
+func (r *RabbitMQ) Connect() (*RabbitMQ, error) {
+	// if we alredy connected do not re-connect
+	if r.conn != nil {
+		return r, nil
+	}
+
+	// r.Dial sets the conn variable
+	if err := r.Dial(); err != nil {
 		return nil, err
 	}
 
